@@ -147,13 +147,20 @@ export const createResponse: RequestHandler = async (req, res) => {
   res.status(200).json(created);
 
   // Send to realtime
-  if (!hasChannelSubcribers(`route:${route.id}`)) return;
-  prisma.response
-    .findMany({
-      where: { routeId: route.id },
-    })
-    .then((responses) =>
-      sendMessageToChannel(`route:${route.id}`, JSON.stringify(responses))
+  hasChannelSubcribers(`route:${route.id}`)
+    .then((subscribers) =>
+      subscribers
+        ? prisma.response
+            .findMany({
+              where: { routeId: route.id },
+            })
+            .then((responses) =>
+              sendMessageToChannel(
+                `route:${route.id}`,
+                JSON.stringify(responses)
+              )
+            )
+        : undefined
     )
     .catch(() => undefined);
 };
@@ -242,13 +249,20 @@ export const editResponse: RequestHandler = async (req, res) => {
   res.status(200).json(edited);
 
   // Send to realtime
-  if (!hasChannelSubcribers(`route:${route.id}`)) return;
-  prisma.response
-    .findMany({
-      where: { routeId: route.id },
-    })
-    .then((responses) =>
-      sendMessageToChannel(`route:${route.id}`, JSON.stringify(responses))
+  hasChannelSubcribers(`route:${route.id}`)
+    .then((subscribers) =>
+      subscribers
+        ? prisma.response
+            .findMany({
+              where: { routeId: route.id },
+            })
+            .then((responses) =>
+              sendMessageToChannel(
+                `route:${route.id}`,
+                JSON.stringify(responses)
+              )
+            )
+        : undefined
     )
     .catch(() => undefined);
 };
@@ -293,13 +307,20 @@ export const deleteResponse: RequestHandler = async (req, res) => {
   res.status(200).json({ message: "Response deleted successfully" });
 
   // Send to realtime
-  if (!hasChannelSubcribers(`route:${route.id}`)) return;
-  prisma.response
-    .findMany({
-      where: { routeId: route.id },
-    })
-    .then((responses) =>
-      sendMessageToChannel(`route:${route.id}`, JSON.stringify(responses))
+  hasChannelSubcribers(`route:${route.id}`)
+    .then((subscribers) =>
+      subscribers
+        ? prisma.response
+            .findMany({
+              where: { routeId: route.id },
+            })
+            .then((responses) =>
+              sendMessageToChannel(
+                `route:${route.id}`,
+                JSON.stringify(responses)
+              )
+            )
+        : undefined
     )
     .catch(() => undefined);
 };
