@@ -1,4 +1,4 @@
-FROM node:lts as build
+FROM node:22 as build
 
 WORKDIR /usr/local/app
 COPY ./package.json /usr/local/app/
@@ -11,7 +11,7 @@ RUN npm install
 RUN npx prisma generate
 RUN npm run build
 
-FROM node:lts
+FROM node:22
 
 WORKDIR /usr/local/app
 COPY --from=build /usr/local/app/node_modules /usr/local/app/node_modules
