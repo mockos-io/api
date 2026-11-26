@@ -2,6 +2,7 @@ import "dotenv/config";
 
 import express, { json } from "express";
 import info from "../package.json";
+import cors from "cors";
 import { notFoundHandler } from "./handlers/404";
 import { errorHandler } from "./handlers/error";
 import { httpErrorHandler } from "./handlers/http";
@@ -20,6 +21,7 @@ import { tokensRouter } from "./routes/tokens";
 const app = express();
 
 app.use(json());
+app.use(cors())
 
 app.use("/auth", authRouter);
 
