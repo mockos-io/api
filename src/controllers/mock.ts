@@ -17,6 +17,7 @@ export const useMock: RequestHandler = async (req, res) => {
     where: {
       projectId: token.projectId,
       endpoint: { not: null },
+      enabled: true,
     },
     orderBy: { order: "asc" },
   });
@@ -45,7 +46,9 @@ export const useMock: RequestHandler = async (req, res) => {
     : undefined;
 
   const code = !file
-    ? await prisma.processor.findUnique({ where: { responseId: response.id } })
+    ? await prisma.processor.findFirst({
+        where: { responseId: response.id, enabled: true },
+      })
     : undefined;
 
   res.setHeaders(

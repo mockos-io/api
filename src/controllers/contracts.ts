@@ -184,15 +184,22 @@ export const importContract: RequestHandler = async (req, res) => {
     .json({ message: "The contract has been succesfully imported" });
 
   // Send to realtime
-  if (!hasChannelSubcribers(`project:${project.id}`)) return;
-  prisma.route
-    .findMany({
-      include: { children: { orderBy: { order: "asc" } } },
-      where: { projectId: project.id, parentFolderId: null },
-      orderBy: { order: "asc" },
-    })
-    .then((routes) =>
-      sendMessageToChannel(`project:${project.id}`, JSON.stringify(routes))
+  hasChannelSubcribers(`project:${project.id}`)
+    .then((subscribers) =>
+      subscribers
+        ? prisma.route
+            .findMany({
+              include: { children: { orderBy: { order: "asc" } } },
+              where: { projectId: project.id, parentFolderId: null },
+              orderBy: { order: "asc" },
+            })
+            .then((routes) =>
+              sendMessageToChannel(
+                `project:${project.id}`,
+                JSON.stringify(routes)
+              )
+            )
+        : undefined
     )
     .catch(() => undefined);
 };
