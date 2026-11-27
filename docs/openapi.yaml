@@ -646,7 +646,9 @@ paths:
     delete:
       tags: [Routes]
       summary: Delete a route or folder
-      description: Deletes a route or folder and everything inside it. Only editors and administrators can do this.
+      description: |
+        Deletes a route or folder. Routes inside a deleted folder are moved to
+        the top level. Only editors and administrators can do this.
       parameters:
         - $ref: '#/components/parameters/ProjectId'
         - $ref: '#/components/parameters/RouteId'
@@ -935,8 +937,6 @@ paths:
     put: *mockRoot
     patch: *mockRoot
     delete: *mockRoot
-    head: *mockRoot
-    options: *mockRoot
   /mock/{token}/{path}:
     get: &mockPath
       tags: [Mock]
@@ -966,8 +966,6 @@ paths:
     put: *mockPath
     patch: *mockPath
     delete: *mockPath
-    head: *mockPath
-    options: *mockPath
 
 components:
   securitySchemes:
