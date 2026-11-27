@@ -3,7 +3,7 @@ import { HttpError } from "../errors/http";
 import { authenticateUser } from "../helpers/auth";
 import { convertContractToRoutes } from "../helpers/swagger";
 import { prisma } from "../services/prisma";
-import { hasChannelSubcribers, sendMessageToChannel } from "../services/redis";
+import { notifyRoutes } from "../services/realtime/routes";
 import { importContractValidator } from "../validators/contracts/import";
 
 export const importContract: RequestHandler = async (req, res) => {
@@ -184,22 +184,5 @@ export const importContract: RequestHandler = async (req, res) => {
     .json({ message: "The contract has been succesfully imported" });
 
   // Send to realtime
-  hasChannelSubcribers(`project:${project.id}`)
-    .then((subscribers) =>
-      subscribers
-        ? prisma.route
-            .findMany({
-              include: { children: { orderBy: { order: "asc" } } },
-              where: { projectId: project.id, parentFolderId: null },
-              orderBy: { order: "asc" },
-            })
-            .then((routes) =>
-              sendMessageToChannel(
-                `project:${project.id}`,
-                JSON.stringify(routes)
-              )
-            )
-        : undefined
-    )
-    .catch(() => undefined);
+  notifyRoutes(project.id);
 };

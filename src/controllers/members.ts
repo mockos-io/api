@@ -2,7 +2,7 @@ import { RequestHandler } from "express";
 import { HttpError } from "../errors/http";
 import { authenticateUser } from "../helpers/auth";
 import { prisma } from "../services/prisma";
-import { hasChannelSubcribers, sendMessageToChannel } from "../services/redis";
+import { notifyInvitations } from "../services/realtime/invitations";
 import { editMemberValidator } from "../validators/members/edit";
 import { inviteMemberValidator } from "../validators/members/invite";
 import { filterValidator } from "../validators/shared/filter";
@@ -95,24 +95,7 @@ export const inviteMember: RequestHandler = async (req, res) => {
   res.status(200).json(member);
 
   // Send realtime
-  hasChannelSubcribers(`invitations:${invited.id}`)
-    .then((subscribers) =>
-      subscribers
-        ? prisma.project
-            .findMany({
-              where: {
-                members: { some: { userId: invited.id, verified: false } },
-              },
-            })
-            .then((invitations) =>
-              sendMessageToChannel(
-                `invitations:${invited.id}`,
-                JSON.stringify(invitations)
-              )
-            )
-        : undefined
-    )
-    .catch(() => undefined);
+  notifyInvitations(invited.id);
 };
 
 export const deleteMember: RequestHandler = async (req, res) => {
@@ -143,25 +126,7 @@ export const deleteMember: RequestHandler = async (req, res) => {
   res.status(200).json({ message: "Member removed successfully" });
 
   // Send realtime
-  if (exists.verified) return;
-  hasChannelSubcribers(`invitations:${exists.id}`)
-    .then((subscribers) =>
-      subscribers
-        ? prisma.project
-            .findMany({
-              where: {
-                members: { some: { userId: exists.id, verified: false } },
-              },
-            })
-            .then((invitations) =>
-              sendMessageToChannel(
-                `invitations:${exists.id}`,
-                JSON.stringify(invitations)
-              )
-            )
-        : undefined
-    )
-    .catch(() => undefined);
+  if (!exists.verified) notifyInvitations(exists.userId);
 };
 
 export const editMember: RequestHandler = async (req, res) => {
@@ -196,23 +161,5 @@ export const editMember: RequestHandler = async (req, res) => {
   res.status(200).json(member);
 
   // Send realtime
-  if (exists.verified) return;
-  hasChannelSubcribers(`invitations:${exists.id}`)
-    .then((subscribers) =>
-      subscribers
-        ? prisma.project
-            .findMany({
-              where: {
-                members: { some: { userId: exists.id, verified: false } },
-              },
-            })
-            .then((invitations) =>
-              sendMessageToChannel(
-                `invitations:${exists.id}`,
-                JSON.stringify(invitations)
-              )
-            )
-        : undefined
-    )
-    .catch(() => undefined);
+  if (!exists.verified) notifyInvitations(exists.userId);
 };
