@@ -8,13 +8,13 @@ const mailjet = new Mailjet({
 export const sendConfirmationEmail = (
   name: string,
   email: string,
-  url: string
+  url: string,
 ) => {
   return mailjet.post("send", { version: "v3.1" }).request({
     Messages: [
       {
         From: {
-          Email: "info@mockos.io",
+          Email: process.env.EMAIL,
           Name: "Mockos",
         },
         To: [
@@ -23,7 +23,7 @@ export const sendConfirmationEmail = (
             Name: name,
           },
         ],
-        TemplateID: 7798686,
+        TemplateID: Number(process.env.MJ_TEMPLATE),
         TemplateLanguage: true,
         Subject: "Email Confirmation",
         Variables: {
