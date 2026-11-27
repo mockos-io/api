@@ -11,6 +11,7 @@ import { getBanner } from "./helpers/banner";
 import { authRouter } from "./routes/auth";
 import { codeRouter } from "./routes/code";
 import { contractsRouter } from "./routes/contracts";
+import { invitationsRouter } from "./routes/invitations";
 import { membersRouter } from "./routes/members";
 import { mockRouter } from "./routes/mock";
 import { projectsRouter } from "./routes/projects";
@@ -21,13 +22,14 @@ import { tokensRouter } from "./routes/tokens";
 const app = express();
 
 app.use(json());
-app.use(cors())
+app.use(cors());
 
 app.use("/auth", authRouter);
+app.use("/invitations", invitationsRouter);
 
 app.use(
   "/projects/:projectId/routes/:routeId/responses/:responseId/code",
-  codeRouter
+  codeRouter,
 );
 app.use("/projects/:projectId/routes/:routeId/responses", responsesRouter);
 app.use("/projects/:projectId/routes", routesRouter);

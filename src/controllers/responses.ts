@@ -3,12 +3,8 @@ import { v4 } from "uuid";
 import { HttpError } from "../errors/http";
 import { authenticateUser } from "../helpers/auth";
 import { prisma } from "../services/prisma";
-import {
-  hasChannelSubcribers,
-  sendMessageToChannel,
-  subscribeToChannel,
-  unsubscribeFromChannel,
-} from "../services/redis";
+import { notifyResponses } from "../services/realtime/responses";
+import { subscribeToChannel, unsubscribeFromChannel } from "../services/redis";
 import { removeFile, uploadFile } from "../services/s3";
 import { createResponseValidator } from "../validators/responses/create";
 import { editResponseValidator } from "../validators/responses/edit";
@@ -147,22 +143,7 @@ export const createResponse: RequestHandler = async (req, res) => {
   res.status(200).json(created);
 
   // Send to realtime
-  hasChannelSubcribers(`route:${route.id}`)
-    .then((subscribers) =>
-      subscribers
-        ? prisma.response
-            .findMany({
-              where: { routeId: route.id },
-            })
-            .then((responses) =>
-              sendMessageToChannel(
-                `route:${route.id}`,
-                JSON.stringify(responses)
-              )
-            )
-        : undefined
-    )
-    .catch(() => undefined);
+  notifyResponses(route.id);
 };
 
 export const editResponse: RequestHandler = async (req, res) => {
@@ -249,22 +230,7 @@ export const editResponse: RequestHandler = async (req, res) => {
   res.status(200).json(edited);
 
   // Send to realtime
-  hasChannelSubcribers(`route:${route.id}`)
-    .then((subscribers) =>
-      subscribers
-        ? prisma.response
-            .findMany({
-              where: { routeId: route.id },
-            })
-            .then((responses) =>
-              sendMessageToChannel(
-                `route:${route.id}`,
-                JSON.stringify(responses)
-              )
-            )
-        : undefined
-    )
-    .catch(() => undefined);
+  notifyResponses(route.id);
 };
 
 export const deleteResponse: RequestHandler = async (req, res) => {
@@ -307,20 +273,5 @@ export const deleteResponse: RequestHandler = async (req, res) => {
   res.status(200).json({ message: "Response deleted successfully" });
 
   // Send to realtime
-  hasChannelSubcribers(`route:${route.id}`)
-    .then((subscribers) =>
-      subscribers
-        ? prisma.response
-            .findMany({
-              where: { routeId: route.id },
-            })
-            .then((responses) =>
-              sendMessageToChannel(
-                `route:${route.id}`,
-                JSON.stringify(responses)
-              )
-            )
-        : undefined
-    )
-    .catch(() => undefined);
+  notifyResponses(route.id);
 };

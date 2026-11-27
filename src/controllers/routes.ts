@@ -3,12 +3,8 @@ import { RequestHandler } from "express";
 import { HttpError } from "../errors/http";
 import { authenticateUser } from "../helpers/auth";
 import { prisma } from "../services/prisma";
-import {
-  hasChannelSubcribers,
-  sendMessageToChannel,
-  subscribeToChannel,
-  unsubscribeFromChannel,
-} from "../services/redis";
+import { notifyRoutes } from "../services/realtime/routes";
+import { subscribeToChannel, unsubscribeFromChannel } from "../services/redis";
 import { createRouteValidator } from "../validators/routes/create";
 import {
   editFolderValidator,
@@ -163,24 +159,7 @@ export const createRoute: RequestHandler = async (req, res) => {
   res.status(200).json(created);
 
   // Send to realtime
-  hasChannelSubcribers(`project:${project.id}`)
-    .then((subscribers) =>
-      subscribers
-        ? prisma.route
-            .findMany({
-              include: { children: { orderBy: { order: "asc" } } },
-              where: { projectId: project.id, parentFolderId: null },
-              orderBy: { order: "asc" },
-            })
-            .then((routes) =>
-              sendMessageToChannel(
-                `project:${project.id}`,
-                JSON.stringify(routes)
-              )
-            )
-        : undefined
-    )
-    .catch(() => undefined);
+  notifyRoutes(project.id);
 };
 
 export const editRoute: RequestHandler = async (req, res) => {
@@ -220,24 +199,7 @@ export const editRoute: RequestHandler = async (req, res) => {
   res.status(200).json(edited);
 
   // Send to realtime
-  hasChannelSubcribers(`project:${project.id}`)
-    .then((subscribers) =>
-      subscribers
-        ? prisma.route
-            .findMany({
-              include: { children: { orderBy: { order: "asc" } } },
-              where: { projectId: project.id, parentFolderId: null },
-              orderBy: { order: "asc" },
-            })
-            .then((routes) =>
-              sendMessageToChannel(
-                `project:${project.id}`,
-                JSON.stringify(routes)
-              )
-            )
-        : undefined
-    )
-    .catch(() => undefined);
+  notifyRoutes(project.id);
 };
 
 export const sortRoute: RequestHandler = async (req, res) => {
@@ -333,24 +295,7 @@ export const sortRoute: RequestHandler = async (req, res) => {
   res.status(200).json({ message: "Sorted successfully!" });
 
   // Send to realtime
-  hasChannelSubcribers(`project:${project.id}`)
-    .then((subscribers) =>
-      subscribers
-        ? prisma.route
-            .findMany({
-              include: { children: { orderBy: { order: "asc" } } },
-              where: { projectId: project.id, parentFolderId: null },
-              orderBy: { order: "asc" },
-            })
-            .then((routes) =>
-              sendMessageToChannel(
-                `project:${project.id}`,
-                JSON.stringify(routes)
-              )
-            )
-        : undefined
-    )
-    .catch(() => undefined);
+  notifyRoutes(project.id);
 };
 
 export const deleteRoute: RequestHandler = async (req, res) => {
@@ -395,22 +340,5 @@ export const deleteRoute: RequestHandler = async (req, res) => {
   res.status(200).json({ message: "Deleted succesfully!" });
 
   // Send to realtime
-  hasChannelSubcribers(`project:${project.id}`)
-    .then((subscribers) =>
-      subscribers
-        ? prisma.route
-            .findMany({
-              include: { children: { orderBy: { order: "asc" } } },
-              where: { projectId: project.id, parentFolderId: null },
-              orderBy: { order: "asc" },
-            })
-            .then((routes) =>
-              sendMessageToChannel(
-                `project:${project.id}`,
-                JSON.stringify(routes)
-              )
-            )
-        : undefined
-    )
-    .catch(() => undefined);
+  notifyRoutes(project.id);
 };

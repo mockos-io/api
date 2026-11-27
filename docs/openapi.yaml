@@ -24,6 +24,8 @@ tags:
     description: Workspaces that group mock routes and access tokens.
   - name: Members
     description: People who can view or edit a project.
+  - name: Invitations
+    description: Project invitations for the authenticated user.
   - name: Access Tokens
     description: Project tokens used to reach the public mock endpoints.
   - name: Contracts
@@ -969,6 +971,80 @@ paths:
     head: *mockPath
     options: *mockPath
 
+  /invitations/realtime:
+    get:
+      tags: [Invitations]
+      summary: Watch your invitations in real time
+      description: |
+        Opens a server-sent events stream with the authenticated user's pending
+        invitations. The first event contains the current list; every following
+        event contains the full updated list whenever an invitation is created,
+        accepted or rejected.
+      responses:
+        '200':
+          description: A stream of pending invitations.
+          content:
+            text/event-stream:
+              schema:
+                type: string
+                description: |
+                  Each event is an SSE `data:` line containing a JSON array of
+                  `Invitation` objects.
+                example: |
+                  data: [{"id":1,"userId":1,"projectId":2,"role":"EDITOR","verified":false,"project":{"id":2,"name":"Payments","description":null,"forkedFromId":null,"createdAt":"2026-01-01T00:00:00.000Z","updatedAt":"2026-01-01T00:00:00.000Z"}}]
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /invitations/{invitationId}:
+    delete:
+      tags: [Invitations]
+      summary: Reject an invitation
+      description: |
+        Rejects and removes a pending invitation for the authenticated user. The
+        project itself is not modified.
+      parameters:
+        - $ref: '#/components/parameters/InvitationId'
+      responses:
+        '200':
+          description: The invitation was rejected.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Message'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          description: There is no pending invitation with this id.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /invitations/{invitationId}/accept:
+    post:
+      tags: [Invitations]
+      summary: Accept an invitation
+      description: |
+        Accepts the authenticated user's pending invitation and marks their
+        membership as accepted. Invitations that were already accepted cannot be
+        accepted again.
+      parameters:
+        - $ref: '#/components/parameters/InvitationId'
+      responses:
+        '200':
+          description: The accepted membership.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Member'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          description: There is no pending invitation with this id.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
 components:
   securitySchemes:
     bearerAuth:
@@ -1006,6 +1082,14 @@ components:
       in: path
       required: true
       description: ID of the membership.
+      schema:
+        type: integer
+        minimum: 1
+    InvitationId:
+      name: invitationId
+      in: path
+      required: true
+      description: ID of the pending membership (invitation).
       schema:
         type: integer
         minimum: 1
@@ -1298,6 +1382,24 @@ components:
         total:
           type: integer
           description: Total number of matching members.
+    Invitation:
+      type: object
+      required: [id, userId, projectId, role, verified, project]
+      properties:
+        id:
+          type: integer
+          description: ID of the pending membership, used to accept or reject it.
+        userId:
+          type: integer
+        projectId:
+          type: integer
+        role:
+          $ref: '#/components/schemas/MemberRole'
+        verified:
+          type: boolean
+          description: Always `false` while the invitation is pending.
+        project:
+          $ref: '#/components/schemas/Project'
     InviteMemberRequest:
       type: object
       required: [email, role]
